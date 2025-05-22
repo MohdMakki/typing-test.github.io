@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/computer.png" type="image/png">
+  <title>Typing Test</title>
+  <style>
+    :root {
+      --bg-color: #d6e4f0;
+      --text-color: #333;
+      --container-bg: white;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --input-shadow: rgba(0, 0, 0, 0.1);
+      --stat-bg: #f8f9fa;
+      --stat-text: #2c3e50;
+      --stat-label: #7f8c8d;
+      --current-bg: #eee;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1a1a1a;
+      --text-color: #e0e0e0;
+      --container-bg: #2d2d2d;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --input-shadow: rgba(0, 0, 0, 0.3);
+      --stat-bg: #3a3a3a;
+      --stat-text: #e0e0e0;
+      --stat-label: #a0a0a0;
+      --current-bg: #555;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .header {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 1000;
+    }
+
+    .theme-toggle-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .theme-toggle-label {
+      position: relative;
+      display: inline-block;
+      width: 72px;
+      height: 40px;
+    }
+
+    .theme-toggle-input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .theme-toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 40px;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    .theme-toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 32px;
+      width: 32px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    .theme-toggle-input:checked + .theme-toggle-slider {
+      background-color: #3498db;
+    }
+
+    .theme-toggle-input:checked + .theme-toggle-slider:before {
+      transform: translateX(32px);
+    }
+
+    .welcome-message {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .welcome-content {
+      background-color: var(--container-bg);
+      color: var(--text-color);
+      padding: 36px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 4px 15px var(--shadow);
+      text-align: center;
+    }
+
+    .welcome-title {
+      font-size: 28px;
+      margin-bottom: 24px;
+      font-weight: bold;
+    }
+
+    .welcome-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .welcome-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .results-welcome {
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 24px;
+      padding: 18px;
+      background-color: var(--stat-bg);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px var(--shadow);
+      text-align: center;
+      font-size: 22px;
+      color: var(--stat-text);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 1080px;
+      flex-grow: 1;
+      justify-content: center;
+    }
+
+    .word-container {
+      background-color: var(--container-bg);
+      border-radius: 6px;
+      padding: 24px 36px;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 6px var(--shadow);
+      overflow: hidden;
+    }
+
+    .words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 28px;
+      line-height: 1.5;
+      color: var(--text-color);
+    }
+
+    .word {
+      display: inline-block;
+    }
+
+    .current {
+      background-color: var(--current-bg);
+      border-radius: 4px;
+      padding: 0 5px;
+    }
+
+    .correct {
+      color: #2ecc71;
+    }
+
+    .incorrect {
+      color: #e74c3c;
+    }
+
+    .controls {
+      display: flex;
+      width: 100%;
+      max-width: 960px;
+      gap: 12px;
+      height: 72px;
+      margin-bottom: 18px;
+    }
+
+    .input-area {
+      flex: 1;
+      position: relative;
+      height: 100%;
+    }
+
+    #typing-input {
+      width: 100%;
+      height: 100%;
+      padding: 18px;
+      font-size: 22px;
+      border: none;
+      border-radius: 6px;
+      outline: none;
+      box-shadow: 0 2px 6px var(--input-shadow);
+      background-color: var(--container-bg);
+      color: var(--text-color);
+    }
+
+    .timer-container {
+      width: 120px;
+      height: 100%;
+      background-color: #34495e;
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    .refresh-btn {
+      width: 120px;
+      height: 100%;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    .refresh-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .difficulty-selector {
+      display: flex;
+      width: 100%;
+      max-width: 960px;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .difficulty-btn {
+      flex: 1;
+      height: 54px;
+      border: none;
+      border-radius: 6px;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: white;
+    }
+
+    .easy-btn {
+      background-color: #27ae60;
+    }
+
+    .easy-btn:hover, .easy-btn.active {
+      background-color: #219955;
+      box-shadow: 0 2px 10px rgba(39, 174, 96, 0.4);
+    }
+
+    .medium-btn {
+      background-color: #f39c12;
+    }
+
+    .medium-btn:hover, .medium-btn.active {
+      background-color: #e67e22;
+      box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
+    }
+
+    .hard-btn {
+      background-color: #e74c3c;
+    }
+
+    .hard-btn:hover, .hard-btn.active {
+      background-color: #c0392b;
+      box-shadow: 0 2px 10px rgba(231, 76, 60, 0.4);
+    }
+
+    .last-result {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 24px;
+      padding: 18px;
+      background-color: var(--stat-bg);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    .last-result-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--stat-text);
+    }
+
+    .last-result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    .last-result-item {
+      text-align: center;
+    }
+
+    .last-result-label {
+      font-size: 16px;
+      color: var(--stat-label);
+      margin-bottom: 6px;
+    }
+
+    .last-result-value {
+      font-size: 19px;
+      font-weight: bold;
+      color: var(--stat-text);
+    }
+
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 18px 0;
+      color: var(--text-color);
+      font-size: 19px;
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .word-container {
+        padding: 18px 24px;
+      }
+
+      .words {
+        font-size: 24px;
+      }
+
+      .controls {
+        flex-direction: column;
+        height: auto;
+        gap: 12px;
+      }
+
+      .input-area, .timer-container, .refresh-btn {
+        width: 100%;
+        height: 60px;
+      }
+
+      #typing-input {
+        font-size: 19px;
+        padding: 14px;
+      }
+
+      .timer-container, .refresh-btn {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .difficulty-selector {
+        flex-direction: column;
+      }
+
+      .difficulty-btn {
+        height: 48px;
+        font-size: 16px;
+      }
+
+      .last-result-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .welcome-content {
+        padding: 24px;
+        max-width: 90%;
+      }
+
+      .results-welcome {
+        font-size: 19px;
+        padding: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .word-container {
+        padding: 12px 18px;
+      }
+
+      .words {
+        font-size: 22px;
+        gap: 10px;
+      }
+
+      .header {
+        top: 18px;
+        right: 18px;
+      }
+
+      .theme-toggle-label {
+        width: 60px;
+        height: 34px;
+      }
+
+      .theme-toggle-slider:before {
+        height: 24px;
+        width: 24px;
+        left: 5px;
+        bottom: 5px;
+      }
+
+      .theme-toggle-input:checked + .theme-toggle-slider:before {
+        transform: translateX(26px);
+      }
+
+      .last-result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .last-result-title {
+        font-size: 19px;
+      }
+
+      .last-result-value {
+        font-size: 16px;
+      }
+
+      .welcome-title {
+        font-size: 24px;
+      }
+
+      footer {
+        font-size: 16px;
+        padding: 12px 0;
+      }
+
+      .results-welcome {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="theme-toggle-container">
+      <label class="theme-toggle-label">
+        <input type="checkbox" class="theme-toggle-input" id="theme-toggle">
+        <span class="theme-toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="welcome-message" id="welcome-message" style="display: none;">
+    <div class="welcome-content">
+      <h2 class="welcome-title">Welcome to Typing Test!</h2>
+      <p>Test your typing speed and accuracy. Choose a difficulty, type the words, and see your results below the input area.</p>
+      <button class="welcome-btn" id="welcome-btn">Get Started</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="difficulty-selector">
+      <button class="difficulty-btn easy-btn active" id="easy-mode">Easy</button>
+      <button class="difficulty-btn medium-btn" id="medium-mode">Medium</button>
+      <button class="difficulty-btn hard-btn" id="hard-mode">Hard</button>
+    </div>
+
+    <div class="word-container">
+      <div class="words" id="text-display"></div>
+    </div>
+
+    <div class="controls">
+      <div class="input-area">
+        <input
+          type="text"
+          id="typing-input"
+          placeholder="Type here..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="timer-container" id="timer">1:00</div>
+      <button class="refresh-btn" id="reset-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="results-welcome" id="results-welcome" style="display: none;">
+      Start your first typing test to see your results here!
+    </div>
+
+    <div class="last-result" id="last-result" style="display: none;">
+      <div class="last-result-title">Last Test Results</div>
+      <div class="last-result-grid" id="last-result-grid">
+        <!-- Results will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer-quote">
+    "Practice makes perfect - keep typing to unlock your full potential!"
+  </footer>
+
+  <script>
+    const allWords = {
+      easy: ["the", "and", "for", "are", "but", "not", "you", "all", "any", "can", "had", "her", "was", 
+        "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new", "now", "old", 
+        "see", "two", "way", "who", "boy", "did", "its", "let", "put", "say", "she", "too", "use", 
+        "that", "with", "have", "this", "will", "your", "from", "they", "know", "want", "been", 
+        "good", "much", "some", "time", "very", "when", "come", "here", "just", "like", "long", 
+        "make", "many", "more", "only", "over", "such", "take", "than", "them", "well", "were",
+        "also", "back", "even", "still", "such", "took", "form", "term", "told", "through"],
+      medium: ["about", "better", "during", "number", "should", "always", "before", "little", "called", 
+        "states", "wanted", "however", "around", "large", "though", "people", "school", "family", 
+        "different", "country", "report", "answer", "mother", "father", "between", "really", 
+        "something", "example", "against", "things", "another", "whether", "because", "together", 
+        "general", "through", "important", "children", "national", "program", "question", "government", 
+        "problems", "interest", "sometime", "complete", "system", "history", "course", "since", 
+        "become", "almost", "enough", "return", "change", "second", "thought", "believe", "person", 
+        "provide", "perhaps", "happen", "include", "consider", "present", "remain", "result", "appear", 
+        "social", "several", "similar", "special", "company", "problem", "service", "toward", "matter", 
+        "business", "usually", "certain", "process", "current", "subject", "section", "office", "single"],
+      hard: ["development", "information", "government", "experience", "international", "organization", 
+        "opportunity", "especially", "population", "understand", "particular", "available", "necessary", 
+        "individual", "technology", "situation", "university", "management", "difference", "everything", 
+        "production", "significant", "department", "discussion", "throughout", "association", 
+        "performance", "agreement", "television", "themselves", "collection", "environmental", 
+        "responsibility", "administration", "investigation", "representative", "consideration", 
+        "approximately", "specifically", "determination", "substantially", "establishment", 
+        "constitution", "characteristics", "identification", "representation", "simultaneously", 
+        "consciousness", "unfortunately", "transformation", "extraordinary", "consequently", 
+        "recommendation", "pharmaceutical", "sophisticated", "fundamentally", "classification", 
+        "communication", "effectiveness", "implementation", "traditionally", "professional", 
+        "particularly", "advertisement", "requirements", "independent", "knowledgeable", 
+        "comprehensive", "participating", "demonstration", "immediately", "understanding", 
+        "significance", "conversation", "relationship", "considerable", "achievement", "perspective",
+        "expectations", "continuously", "furthermore", "neighborhood", "nevertheless", "corporation",
+        "association", "recognition", "interesting", "development", "alternative", "distinguish"]
+    };
+
+    const quotes = [
+      "Practice makes perfect - keep typing to unlock your full potential!",
+      "The only way to improve is to keep challenging yourself!",
+      "Every word you type brings you closer to mastery!",
+      "Success is the sum of small efforts repeated daily!",
+      "Typing is a skill - the more you practice, the better you get!",
+      "Consistency is key - keep typing, keep improving!",
+      "Your fingers are learning - keep pushing forward!"
+    ];
+
+    let textDisplay;
+    let typingInput;
+    let timerElement;
+    let resetButton;
+    let easyButton;
+    let mediumButton;
+    let hardButton;
+    let themeToggle;
+    let lastResult;
+    let lastResultGrid;
+    let resultsWelcome;
+    let welcomeMessage;
+    let welcomeButton;
+    let footerQuote;
+
+    let wordIndex = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let timeLeft = 60;
+    let correctWords = 0;
+    let incorrectWords = 0;
+    let isTestActive = false;
+    let visibleWordsStart = 0;
+    let visibleWordsEnd = 20;
+    let currentTypedWord = "";
+    let completedWords = {};
+    let totalCharsTyped = 0;
+    let testDuration = 60;
+    let currentDifficulty = "easy";
+    let currentWords = [];
+
+    document.addEventListener("DOMContentLoaded", function () {
+      textDisplay = document.getElementById("text-display");
+      typingInput = document.getElementById("typing-input");
+      timerElement = document.getElementById("timer");
+      resetButton = document.getElementById("reset-btn");
+      easyButton = document.getElementById("easy-mode");
+      mediumButton = document.getElementById("medium-mode");
+      hardButton = document.getElementById("hard-mode");
+      themeToggle = document.getElementById("theme-toggle");
+      lastResult = document.getElementById("last-result");
+      lastResultGrid = document.getElementById("last-result-grid");
+      resultsWelcome = document.getElementById("results-welcome");
+      welcomeMessage = document.getElementById("welcome-message");
+      welcomeButton = document.getElementById("welcome-btn");
+      footerQuote = document.getElementById("footer-quote");
+
+      const savedTheme = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      themeToggle.checked = savedTheme === "dark";
+
+      // Check if the user has visited before
+      let hasVisited;
+      try {
+        hasVisited = localStorage.getItem("hasVisited");
+        if (!hasVisited) {
+          welcomeMessage.style.display = "flex";
+          localStorage.setItem("hasVisited", "true");
+        } else {
+          welcomeMessage.style.display = "none";
+        }
+      } catch (e) {
+        console.warn("localStorage is not available. Hiding welcome message by default.");
+        welcomeMessage.style.display = "none";
+      }
+
+      const hasCompletedFirstTest = localStorage.getItem("hasCompletedFirstTest");
+      if (!hasCompletedFirstTest) {
+        resultsWelcome.style.display = "block";
+        lastResult.style.display = "none";
+      } else {
+        resultsWelcome.style.display = "none";
+        lastResult.style.display = "flex";
+        loadLastResult();
+      }
+
+      setupEventListeners();
+      setDifficulty("easy");
+      init();
+    });
+
+    function setupEventListeners() {
+      typingInput.addEventListener("input", handleInput);
+      resetButton.addEventListener("click", init);
+
+      easyButton.addEventListener("click", function() { setDifficulty("easy"); });
+      mediumButton.addEventListener("click", function() { setDifficulty("medium"); });
+      hardButton.addEventListener("click", function() { setDifficulty("hard"); });
+
+      themeToggle.addEventListener("change", function() {
+        const newTheme = themeToggle.checked ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+      });
+
+      welcomeButton.addEventListener("click", function() {
+        welcomeMessage.style.display = "none";
+      });
+
+      typingInput.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.code === "Space") {
+          const typedValue = typingInput.value.trim();
+          if (typedValue) {
+            checkWord(typedValue);
+            totalCharsTyped += typedValue.length + 1;
+            setTimeout(() => {
+              typingInput.value = "";
+              currentTypedWord = "";
+            }, 0);
+            e.preventDefault();
+          }
+        }
+      });
+    }
+
+    function setDifficulty(difficulty) {
+      if (isTestActive) return;
+      currentDifficulty = difficulty;
+      currentWords = [...allWords[difficulty]];
+      shuffleArray(currentWords);
+      
+      easyButton.classList.remove("active");
+      mediumButton.classList.remove("active");
+      hardButton.classList.remove("active");
+      
+      if (difficulty === "easy") easyButton.classList.add("active");
+      else if (difficulty === "medium") mediumButton.classList.add("active");
+      else hardButton.classList.add("active");
+      
+      init();
+    }
+
+    function handleInput(e) {
+      const typedValue = typingInput.value;
+      if (!isTestActive && typedValue) startTimer();
+      currentTypedWord = typedValue;
+      updateCurrentWordFeedback();
+    }
+
+    function init() {
+      wordIndex = 0;
+      correctWords = 0;
+      incorrectWords = 0;
+      startTime = null;
+      timeLeft = 60;
+      isTestActive = false;
+      visibleWordsStart = 0;
+      visibleWordsEnd = 20;
+      currentTypedWord = "";
+      completedWords = {};
+      totalCharsTyped = 0;
+      testDuration = 60;
+
+      typingInput.value = "";
+      typingInput.disabled = false;
+      typingInput.focus();
+      timerElement.textContent = "1:00";
+      clearInterval(timerInterval);
+      displayVisibleWords();
+    }
+
+    function createWordElement(word, isCurrent) {
+      const wordSpan = document.createElement("span");
+      wordSpan.classList.add("word");
+      wordSpan.textContent = word;
+      if (isCurrent) wordSpan.classList.add("current");
+      return wordSpan;
+    }
+
+    function displayVisibleWords() {
+      if (!textDisplay) return;
+      textDisplay.innerHTML = "";
+      for (let i = visibleWordsStart; i < visibleWordsEnd && i < currentWords.length; i++) {
+        const word = currentWords[i];
+        const isCurrent = i === wordIndex;
+        const wordElement = createWordElement(word, isCurrent);
+        if (i < wordIndex && completedWords[i] !== undefined) {
+          wordElement.classList.add(completedWords[i] ? "correct" : "incorrect");
+        }
+        textDisplay.appendChild(wordElement);
+      }
+    }
+
+    function updateVisibleWords() {
+      if (wordIndex > visibleWordsStart + Math.floor((visibleWordsEnd - visibleWordsStart) / 2)) {
+        visibleWordsStart = wordIndex - 5;
+        if (visibleWordsStart < 0) visibleWordsStart = 0;
+        visibleWordsEnd = visibleWordsStart + 20;
+        displayVisibleWords();
+      } else {
+        const wordElements = textDisplay.querySelectorAll(".word");
+        wordElements.forEach((word) => word.classList.remove("current"));
+        const currentWordIndex = wordIndex - visibleWordsStart;
+        if (currentWordIndex >= 0 && currentWordIndex < wordElements.length) {
+          wordElements[currentWordIndex].classList.add("current");
+        }
+      }
+    }
+
+    function updateCurrentWordFeedback() {
+      if (!textDisplay) return;
+      const currentWordElement = textDisplay.querySelector(".word.current");
+      if (!currentWordElement) return;
+      const currentWord = currentWords[wordIndex];
+      if (currentTypedWord === currentWord.substring(0, currentTypedWord.length)) {
+        currentWordElement.classList.add("correct");
+        currentWordElement.classList.remove("incorrect");
+      } else {
+        currentWordElement.classList.add("incorrect");
+        currentWordElement.classList.remove("correct");
+      }
+    }
+
+    function startTimer() {
+      startTime = new Date();
+      isTestActive = true;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        if (timeLeft <= 0) endTest();
+      }, 1000);
+    }
+
+    function checkWord(typedWord) {
+      const currentWord = currentWords[wordIndex];
+      const isCorrect = typedWord === currentWord;
+      completedWords[wordIndex] = isCorrect;
+      if (isCorrect) correctWords++;
+      else incorrectWords++;
+      wordIndex++;
+      updateVisibleWords();
+    }
+
+    function saveLastResult(wpm, accuracy, correct, wrong, chars, time, difficulty) {
+      const result = {
+        wpm,
+        accuracy,
+        correct,
+        wrong,
+        chars,
+        time,
+        difficulty
+      };
+      localStorage.setItem("lastTypingTestResult", JSON.stringify(result));
+      displayLastResult(result);
+
+      const hasCompletedFirstTest = localStorage.getItem("hasCompletedFirstTest");
+      if (!hasCompletedFirstTest) {
+        localStorage.setItem("hasCompletedFirstTest", "true");
+        resultsWelcome.style.display = "none";
+        lastResult.style.display = "flex";
+      }
+    }
+
+    function loadLastResult() {
+      const savedResult = localStorage.getItem("lastTypingTestResult");
+      if (savedResult) {
+        const result = JSON.parse(savedResult);
+        displayLastResult(result);
+      }
+    }
+
+    function displayLastResult(result) {
+      lastResultGrid.innerHTML = `
+        <div class="last-result-item">
+          <div class="last-result-label">Difficulty</div>
+          <div class="last-result-value">${result.difficulty.charAt(0).toUpperCase() + result.difficulty.slice(1)}</div>
+        </div>
+        <div class="last-result-item">
+          <div class="last-result-label">WPM</div>
+          <div class="last-result-value">${result.wpm}</div>
+        </div>
+        <div class="last-result-item">
+          <div class="last-result-label">Accuracy</div>
+          <div class="last-result-value">${result.accuracy}%</div>
+        </div>
+        <div class="last-result-item">
+          <div class="last-result-label">Correct Words</div>
+          <div class="last-result-value">${result.correct}</div>
+        </div>
+        <div class="last-result-item">
+          <div class="last-result-label">Wrong Words</div>
+          <div class="last-result-value">${result.wrong}</div>
+        </div>
+        <div class="last-result-item">
+          <div class="last-result-label">Characters</div>
+          <div class="last-result-value">${result.chars}</div>
+        </div>
+      `;
+    }
+
+    function updateFooterQuote() {
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      footerQuote.textContent = quotes[randomIndex];
+    }
+
+    function endTest() {
+      clearInterval(timerInterval);
+      typingInput.disabled = true;
+      isTestActive = false;
+      
+      const actualTestDuration = timeLeft <= 0 ? testDuration : testDuration - timeLeft;
+      const wpm = Math.round((correctWords / actualTestDuration) * 60);
+      const totalWords = correctWords + incorrectWords;
+      const accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
+      
+      saveLastResult(wpm, accuracy, correctWords, incorrectWords, totalCharsTyped, actualTestDuration, currentDifficulty);
+      updateFooterQuote();
+
+      // Reset state but do not repopulate words area
+      wordIndex = 0;
+      correctWords = 0;
+      incorrectWords = 0;
+      startTime = null;
+      timeLeft = 60;
+      isTestActive = false;
+      visibleWordsStart = 0;
+      visibleWordsEnd = 20;
+      currentTypedWord = "";
+      completedWords = {};
+      totalCharsTyped = 0;
+      testDuration = 60;
+
+      typingInput.value = "";
+      typingInput.disabled = false;
+      typingInput.focus();
+      timerElement.textContent = "1:00";
+      clearInterval(timerInterval);
+
+      // Clear the words area
+      textDisplay.innerHTML = "";
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    window.addEventListener("load", function () {
+      if (document.readyState === "complete" || document.readyState === "interactive") {
+        if (document.getElementById("text-display")) init();
+      }
+    });
+  </script>
+</body>
+</html>
